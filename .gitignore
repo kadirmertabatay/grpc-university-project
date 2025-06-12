@@ -1,0 +1,28 @@
+# Go derleme çıktıları
+# 'server' ve 'client' ismindeki çalıştırılabilir dosyaları dışarıda tutar.
+# KLASÖRLERİ DEĞİL, DOSYALARI hedefler.
+
+server.exe
+client.exe
+
+# Go modül bağımlılıkları (go.mod ve go.sum zaten takip ediliyor)
+vendor/
+
+# Ödev gereği: Protobuf tarafından üretilen stub dosyaları.
+# Değerlendirmenin önemli bir parçası!
+*.pb.go
+*_grpc.pb.go
+
+# İşletim sistemi dosyaları
+.DS_Store
+Thumbs.db
+._*
+
+# Log dosyaları
+*.log
+
+# IDE/Editör klasörleri
+.vscode/
+.idea/
+
+gRPC_Delivery.md

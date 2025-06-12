@@ -1,0 +1,164 @@
+// 1. Sözdizimi Sürümü: Protobuf'un en son sürümü olan proto3'ü kullanacağımızı belirtiyoruz.
+syntax = "proto3";
+
+// 2. Paket Adı: Üretilecek Go kodlarının hangi paket altında toplanacağını belirtir.
+// Bu, kod organizasyonu için önemlidir ve isim çakışmalarını önler.
+package university;
+
+// 3. Go Paketi Seçeneği: Go için özel bir seçenektir.
+// Üretilecek kodların tam olarak hangi dizine ve pakete konulacağını belirtir.
+// Genellikle paket adıyla aynı olur ve projenin kök dizinine göre bir yol belirtir.
+option go_package = "university/protos";
+
+// ----------------- MESAJ (MESSAGE) TANIMLARI -----------------
+// Mesajlar, uygulamamızdaki veri yapılarını temsil eder (Java'daki class, Go'daki struct gibi).
+
+// Book (Kitap) varlığı için mesaj tanımı.
+message Book {
+  string id = 1;        // UUID formatında, benzersiz ID
+  string title = 2;     // Kitap başlığı
+  string author = 3;    // Yazar
+  string isbn = 4;      // ISBN-13 formatı
+  string publisher = 5; // Yayınevi
+  int32 page_count = 6; // Sayfa sayısı (int32, gRPC'de yaygın tamsayı türü)
+  int32 stock = 7;      // Stok adedi
+}
+
+// Student (Öğrenci) varlığı için mesaj tanımı.
+message Student {
+  string id = 1;          // UUID formatında, benzersiz ID
+  string name = 2;        // Öğrenci adı
+  string student_number = 3; // Öğrenci numarası
+  string email = 4;       // E-posta adresi
+  bool is_active = 5;     // Öğrenci aktif mi?
+}
+
+// Loan (Ödünç Alma) varlığı için mesaj tanımı.
+message Loan {
+  // Enum: Sadece belirli değerleri alabilen bir alan tanımlar.
+  enum LoanStatus {
+    STATUS_UNSPECIFIED = 0; // Varsayılan, geçersiz değer
+    ONGOING = 1;            // Devam ediyor
+    RETURNED = 2;           // İade edildi
+    LATE = 3;               // Gecikti
+  }
+
+  string id = 1;          // UUID formatında, benzersiz ID
+  string student_id = 2;  // Öğrencinin ID'si
+  string book_id = 3;     // Kitabın ID'si
+  string loan_date = 4;   // Ödünç alma tarihi (örn: "2023-10-27")
+  optional string return_date = 5; // İade tarihi (opsiyonel, yani boş olabilir)
+  LoanStatus status = 6;  // Ödünç durumunu gösteren enum
+}
+
+// ----------------- SERVİS (SERVICE) VE METOT (RPC) TANIMLARI -----------------
+
+// === BookService: Kitaplarla ilgili işlemleri yönetir ===
+service BookService {
+  // RPC: Uzaktan çağrılabilecek fonksiyonlar/metotlar.
+
+  // Yeni bir kitap ekler.
+  rpc AddBook(AddBookRequest) returns (Book);
+
+  // ID'ye göre tek bir kitabı getirir.
+  rpc GetBook(GetBookRequest) returns (Book);
+
+  // Tüm kitapları listeler.
+  // google.protobuf.Empty, boş bir istek mesajı olduğunu belirtir.
+  rpc ListBooks(ListBooksRequest) returns (ListBooksResponse);
+
+  // Mevcut bir kitabı günceller.
+  rpc UpdateBook(UpdateBookRequest) returns (Book);
+
+  // Bir kitabı siler.
+  rpc DeleteBook(DeleteBookRequest) returns (DeleteBookResponse);
+}
+
+// === StudentService: Öğrencilerle ilgili işlemleri yönetir ===
+service StudentService {
+  rpc AddStudent(AddStudentRequest) returns (Student);
+  rpc GetStudent(GetStudentRequest) returns (Student);
+  rpc ListStudents(ListStudentsRequest) returns (ListStudentsResponse);
+  rpc UpdateStudent(UpdateStudentRequest) returns (Student);
+  rpc DeleteStudent(DeleteStudentRequest) returns (DeleteStudentResponse);
+}
+
+// === LoanService: Ödünç alma işlemleriyle ilgili ===
+service LoanService {
+  // Bir öğrencinin bir kitabı ödünç almasını sağlar.
+  rpc BorrowBook(BorrowBookRequest) returns (Loan);
+
+  // Bir öğrencinin kitabı iade etmesini sağlar.
+  rpc ReturnBook(ReturnBookRequest) returns (Loan);
+  
+  // ID'ye göre tek bir ödünç işlemini getirir.
+  rpc GetLoan(GetLoanRequest) returns (Loan);
+
+  // Tüm ödünç alma işlemlerini listeler.
+  rpc ListLoans(ListLoansRequest) returns (ListLoansResponse);
+}
+
+
+// ----------------- İSTEK/YANIT (REQUEST/RESPONSE) MESAJLARI -----------------
+// Her bir RPC metodu için özel istek ve yanıt mesajları tanımlamak en iyi pratiktir.
+// Bu, gelecekte API'yi genişletmeyi kolaylaştırır.
+
+// --- BookService İstek/Yanıt Mesajları ---
+message AddBookRequest {
+  Book book = 1;
+}
+message GetBookRequest {
+  string id = 1;
+}
+message ListBooksRequest {
+  // Gelecekte filtreleme, sayfalama gibi özellikler için buraya alanlar eklenebilir.
+}
+message ListBooksResponse {
+  repeated Book books = 1; // "repeated", bu alanın bir liste/dizi olacağını belirtir.
+}
+message UpdateBookRequest {
+  Book book = 1;
+}
+message DeleteBookRequest {
+  string id = 1;
+}
+message DeleteBookResponse {
+  string message = 1; // Başarı mesajı
+}
+
+// --- StudentService İstek/Yanıt Mesajları ---
+message AddStudentRequest {
+  Student student = 1;
+}
+message GetStudentRequest {
+  string id = 1;
+}
+message ListStudentsRequest {}
+message ListStudentsResponse {
+  repeated Student students = 1;
+}
+message UpdateStudentRequest {
+  Student student = 1;
+}
+message DeleteStudentRequest {
+  string id = 1;
+}
+message DeleteStudentResponse {
+  string message = 1;
+}
+
+// --- LoanService İstek/Yanıt Mesajları ---
+message BorrowBookRequest {
+  string student_id = 1;
+  string book_id = 2;
+}
+message ReturnBookRequest {
+  string loan_id = 1;
+}
+message GetLoanRequest {
+  string id = 1;
+}
+message ListLoansRequest {}
+message ListLoansResponse {
+  repeated Loan loans = 1;
+}
